@@ -4,6 +4,21 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>A2Z Malayalam Songs</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyA9rRMUOfcksZjZj04RQLkKrXsKzXKHmRI",
+  authDomain: "malayalamsongs-5916d.firebaseapp.com",
+  projectId: "malayalamsongs-5916d",
+  storageBucket: "malayalamsongs-5916d.firebasestorage.app",
+  messagingSenderId: "44232575519",
+  appId: "1:44232575519:web:ceaf71571d2d693a7d232a",
+  measurementId: "G-LHZR62BRNH"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+</script>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -139,24 +154,65 @@ button{font-family:inherit;cursor:pointer}
 const tg = window.Telegram?.WebApp;
 if(tg){tg.ready();tg.expand();}
 
-const albums=[
- {id:1,name:"Malayalam Hits",year:"2026",count:10,img:"https://picsum.photos/500/500?random=1"},
- {id:2,name:"New Malayalam",year:"2026",count:8,img:"https://picsum.photos/500/500?random=2"},
- {id:3,name:"Evergreen Songs",year:"2025",count:12,img:"https://picsum.photos/500/500?random=3"}
-];
+let albums = [];
+let singers = [];
+let songs = [];
 
-const singers=[
- {name:"Singer One",img:"https://picsum.photos/200/200?random=21"},
- {name:"Singer Two",img:"https://picsum.photos/200/200?random=22"},
- {name:"Singer Three",img:"https://picsum.photos/200/200?random=23"}
-];
+async function loadFirebaseData(){
+  try{
+    const albumSnap = await db.collection("albums").get();
 
-const songs=[
- {id:1,name:"Song One",singer:"Singer One",year:"2026",album:1,img:"https://picsum.photos/300/300?random=11",audio:""},
- {id:2,name:"Song Two",singer:"Singer Two",year:"2026",album:1,img:"https://picsum.photos/300/300?random=12",audio:""},
- {id:3,name:"Song Three",singer:"Singer Three",year:"2025",album:1,img:"https://picsum.photos/300/300?random=13",audio:""},
- {id:4,name:"Song Four",singer:"Singer One",year:"2025",album:2,img:"https://picsum.photos/300/300?random=14",audio:""}
-];
+    albums = albumSnap.docs.map(doc => {
+      const d = doc.data();
+      return {
+        id: doc.id,
+        name: d.name || "",
+        year: String(d.year || ""),
+        count: Number(d.songCount ?? d.count ?? 0),
+        img: d.image || d.img || ""
+      };
+    });
+
+    const songPromises = albumSnap.docs.map(async albumDoc => {
+      const snap = await db.collection("albums").doc(albumDoc.id).collection("songs").get();
+      return snap.docs.map(doc => {
+        const d = doc.data();
+        return {
+          id: doc.id,
+          name: d.name || "",
+          singer: d.singer || "",
+          year: String(d.released ?? d.year ?? ""),
+          album: albumDoc.id,
+          img: d.image || d.img || "",
+          audio: d.audioUrl || d.audio || "",
+          youtube: d.youtubeUrl || d.youtube || "",
+          duration: d.duration || "",
+          lyrics: d.lyrics || "",
+          music: d.music || ""
+        };
+      });
+    });
+
+    const nestedSongs = await Promise.all(songPromises);
+    songs = nestedSongs.flat();
+
+    const singerMap = new Map();
+    songs.forEach(s => {
+      if(s.singer && !singerMap.has(s.singer)){
+        singerMap.set(s.singer, {
+          name: s.singer,
+          img: s.img || "https://picsum.photos/200/200?random=21"
+        });
+      }
+    });
+    singers = [...singerMap.values()];
+
+    renderHome();
+  }catch(err){
+    console.error("Firebase load error:", err);
+    renderHome();
+  }
+}
 
 let currentSong=null;
 let albumSongIndex=0;
@@ -210,12 +266,12 @@ function openAlbum(id){
  document.getElementById("albumCover").src=a.img;
  document.getElementById("albumTitle").textContent=a.name;
  document.getElementById("albumMeta").textContent=a.year+" • "+a.count+" Songs";
- const list=songs.filter(s=>s.album===id);
+ const list=songs.filter(s=>String(s.album)===String(id));
  document.getElementById("albumSongs").innerHTML=list.length?list.map(songHTML).join(""):`<div class="empty">No songs added yet.</div>`;
  window.scrollTo(0,0);
 }
 function playAlbum(){
- const list=songs.filter(s=>s.album===albums.find(a=>document.getElementById("albumTitle").textContent===a.name)?.id);
+ const list=songs.filter(s=>String(s.album)===String(albums.find(a=>document.getElementById("albumTitle").textContent===a.name)?.id));
  if(list.length)openPlayer(list[0].id);
 }
 function openPlayer(id){
@@ -270,7 +326,7 @@ audio.addEventListener("timeupdate",()=>{if(audio.duration)document.getElementBy
 document.getElementById("progress").addEventListener("input",e=>{if(audio.duration)audio.currentTime=(e.target.value/100)*audio.duration});
 audio.addEventListener("ended",nextSong);
 
-renderHome();
+loadFirebaseData();
 </script>
 </body>
 </html>
