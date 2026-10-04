@@ -66,13 +66,45 @@ input{width:100%;padding:13px;border:1px solid #ddd;border-radius:10px;outline:n
   <div class="card" style="margin-top:20px">
     <h2>Admin Panel</h2>
     <div class="actions">
-      <button class="action" onclick="notReady('Add Album')">＋ Add Album</button>
+      <button class="action" onclick="openAlbumForm()">＋ Add Album</button>
       <button class="action" onclick="notReady('Add Song')">＋ Add Song</button>
       <button class="action" onclick="notReady('Add Singer')">＋ Add Singer</button>
     </div>
     <p id="message" style="color:#777;margin-top:18px">
-      Login is ready. Album, Song and Singer management will be added next.
+      Choose an option above.
     </p>
+  </div>
+
+  <div id="albumFormCard" class="card hidden" style="margin-top:20px">
+    <h2>＋ Add Album</h2>
+
+    <label>Album Name</label>
+    <input id="albumName" type="text" placeholder="Malayalam Hits">
+
+    <label>Year</label>
+    <input id="albumYear" type="number" min="1900" max="2100" placeholder="2026">
+
+    <label>Album Image URL</label>
+    <input id="albumImage" type="url" placeholder="https://...">
+
+    <label>Total Tracks</label>
+    <input id="albumTracks" type="number" min="0" placeholder="10">
+
+    <label>Director</label>
+    <input id="albumDirector" type="text" placeholder="Director name">
+
+    <label>Starring</label>
+    <input id="albumStarring" type="text" placeholder="Starring">
+
+    <label>Released</label>
+    <input id="albumReleased" type="date">
+
+    <div class="actions">
+      <button class="action" onclick="saveAlbum()">Save Album</button>
+      <button class="logout" onclick="closeAlbumForm()">Cancel</button>
+    </div>
+    <div id="albumError" class="error"></div>
+    <div id="albumSuccess" style="color:#168a45;font-size:13px;margin-top:12px"></div>
   </div>
 </section>
 
@@ -104,6 +136,70 @@ function login(){
 
 function logout(){
   auth.signOut();
+}
+
+function openAlbumForm(){
+  document.getElementById("albumFormCard").classList.remove("hidden");
+  document.getElementById("albumName").focus();
+  document.getElementById("albumError").textContent="";
+  document.getElementById("albumSuccess").textContent="";
+}
+
+function closeAlbumForm(){
+  document.getElementById("albumFormCard").classList.add("hidden");
+}
+
+async function saveAlbum(){
+  const error=document.getElementById("albumError");
+  const success=document.getElementById("albumSuccess");
+  error.textContent="";
+  success.textContent="";
+
+  const name=document.getElementById("albumName").value.trim();
+  const year=document.getElementById("albumYear").value.trim();
+  const imageUrl=document.getElementById("albumImage").value.trim();
+  const totalTracks=document.getElementById("albumTracks").value.trim();
+  const director=document.getElementById("albumDirector").value.trim();
+  const starring=document.getElementById("albumStarring").value.trim();
+  const released=document.getElementById("albumReleased").value;
+
+  if(!name){error.textContent="Album Name is required.";return;}
+  if(!year){error.textContent="Year is required.";return;}
+  if(!imageUrl){error.textContent="Album Image URL is required.";return;}
+
+  const btn=document.querySelector('#albumFormCard .action');
+  btn.disabled=true;
+  btn.textContent="Saving...";
+
+  try{
+    const ref=await db.collection("albums").add({
+      name:name,
+      year:Number(year),
+      imageUrl:imageUrl,
+      totalTracks:Number(totalTracks||0),
+      director:director,
+      starring:starring,
+      released:released,
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    success.textContent="Album saved successfully.";
+    document.getElementById("message").textContent="Album added: "+name;
+    document.getElementById("albumName").value="";
+    document.getElementById("albumYear").value="";
+    document.getElementById("albumImage").value="";
+    document.getElementById("albumTracks").value="";
+    document.getElementById("albumDirector").value="";
+    document.getElementById("albumStarring").value="";
+    document.getElementById("albumReleased").value="";
+    await loadCounts();
+  }catch(e){
+    console.error(e);
+    error.textContent="Could not save album: "+(e.message||e);
+  }finally{
+    btn.disabled=false;
+    btn.textContent="Save Album";
+  }
 }
 
 function notReady(name){
