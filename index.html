@@ -4,448 +4,273 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>A2Z Malayalam Songs</title>
-
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
 <style>
-*{
-  box-sizing:border-box;
-  margin:0;
-  padding:0;
-}
-
-body{
-  font-family:Arial,sans-serif;
-  background:#f6f7f9;
-  color:#151515;
-  padding-bottom:80px;
-}
-
-.header{
-  background:#fff;
-  padding:18px 16px 14px;
-  position:sticky;
-  top:0;
-  z-index:10;
-  border-bottom:1px solid #eee;
-}
-
-.header-top{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-}
-
-.logo{
-  font-size:21px;
-  font-weight:700;
-}
-
-.profile{
-  width:40px;
-  height:40px;
-  border-radius:50%;
-  background:#eef1f5;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:20px;
-}
-
-.search{
-  margin-top:14px;
-  background:#f1f3f5;
-  border-radius:13px;
-  padding:12px 15px;
-  display:flex;
-  align-items:center;
-  gap:9px;
-}
-
-.search input{
-  border:0;
-  outline:0;
-  background:transparent;
-  width:100%;
-  font-size:15px;
-}
-
-.section{
-  padding:20px 15px 0;
-}
-
-.section-title{
-  font-size:19px;
-  font-weight:700;
-  margin-bottom:13px;
-}
-
-.horizontal{
-  display:flex;
-  gap:13px;
-  overflow-x:auto;
-  scrollbar-width:none;
-}
-
-.horizontal::-webkit-scrollbar{
-  display:none;
-}
-
-.album{
-  min-width:145px;
-  background:#fff;
-  border-radius:14px;
-  overflow:hidden;
-  box-shadow:0 2px 8px rgba(0,0,0,.06);
-}
-
-.album img{
-  width:145px;
-  height:145px;
-  object-fit:cover;
-  display:block;
-}
-
-.album-info{
-  padding:10px;
-}
-
-.album-name{
-  font-weight:600;
-  font-size:14px;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
-
-.album-year{
-  color:#777;
-  font-size:12px;
-  margin-top:4px;
-}
-
-.song{
-  display:flex;
-  align-items:center;
-  background:#fff;
-  border-radius:13px;
-  padding:9px;
-  margin-bottom:9px;
-}
-
-.song img{
-  width:55px;
-  height:55px;
-  object-fit:cover;
-  border-radius:9px;
-}
-
-.song-info{
-  flex:1;
-  min-width:0;
-  padding:0 11px;
-}
-
-.song-name{
-  font-size:14px;
-  font-weight:600;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
-
-.song-singer{
-  color:#777;
-  font-size:12px;
-  margin-top:5px;
-}
-
-.play{
-  width:40px;
-  height:40px;
-  border-radius:50%;
-  border:0;
-  background:#168cff;
-  color:#fff;
-  font-size:17px;
-}
-
-.bottom{
-  position:fixed;
-  bottom:0;
-  left:0;
-  right:0;
-  height:65px;
-  background:#fff;
-  border-top:1px solid #eee;
-  display:flex;
-  justify-content:space-around;
-  align-items:center;
-  z-index:20;
-}
-
-.nav{
-  border:0;
-  background:none;
-  color:#777;
-  font-size:11px;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:4px;
-}
-
-.nav span{
-  font-size:21px;
-}
-
-.nav.active{
-  color:#168cff;
-}
-
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#f6f7f9;color:#151515;padding-bottom:82px}
+button{font-family:inherit;cursor:pointer}
+.header{background:#fff;padding:16px;position:sticky;top:0;z-index:10;border-bottom:1px solid #eee}
+.top{display:flex;align-items:center;justify-content:space-between}
+.logo{font-size:21px;font-weight:700}
+.profile-btn{border:0;width:42px;height:42px;border-radius:50%;background:#eef1f5;font-size:20px}
+.search{margin-top:13px;background:#f1f3f5;border-radius:14px;padding:12px 15px;display:flex;gap:9px;align-items:center}
+.search input{border:0;outline:0;background:transparent;width:100%;font-size:16px}
+.page{padding:20px 15px}
+.hidden{display:none!important}
+.title{font-size:19px;font-weight:700;margin-bottom:13px}
+.row{display:flex;gap:13px;overflow-x:auto;scrollbar-width:none}
+.row::-webkit-scrollbar{display:none}
+.album{min-width:145px;border:0;background:#fff;border-radius:14px;overflow:hidden;text-align:left;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.album img{width:145px;height:145px;object-fit:cover;display:block}
+.album-info{padding:10px}
+.album-name{font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.muted{color:#777;font-size:12px;margin-top:4px}
+.song{display:flex;align-items:center;background:#fff;border-radius:13px;padding:9px;margin-bottom:9px}
+.song img{width:56px;height:56px;border-radius:9px;object-fit:cover}
+.song-info{flex:1;min-width:0;padding:0 11px}
+.song-name{font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.play{width:40px;height:40px;border:0;border-radius:50%;background:#168cff;color:#fff;font-size:17px}
+.heart{border:0;background:transparent;font-size:24px;margin-right:8px}
+.singer{min-width:100px;border:0;background:transparent;text-align:center}
+.singer img{width:88px;height:88px;border-radius:50%;object-fit:cover}
+.singer div{font-size:13px;font-weight:600;margin-top:7px}
+.back{border:0;background:transparent;font-size:16px;padding:0 0 16px}
+.detail-cover{width:100%;max-width:420px;aspect-ratio:1/1;object-fit:cover;border-radius:18px;display:block;margin:0 auto 18px}
+.detail-title{text-align:center;font-size:23px;font-weight:700}
+.detail-sub{text-align:center;color:#777;margin:7px 0 16px}
+.primary{display:block;width:100%;max-width:420px;margin:0 auto 18px;border:0;border-radius:12px;padding:13px;background:#168cff;color:#fff;font-size:16px;font-weight:700}
+.player{text-align:center}
+.player img{width:78%;max-width:350px;aspect-ratio:1/1;object-fit:cover;border-radius:18px}
+.player h2{margin-top:16px}
+.controls{display:flex;justify-content:center;gap:22px;align-items:center;margin:20px 0}
+.ctrl{border:0;background:#eef1f5;width:48px;height:48px;border-radius:50%;font-size:20px}
+.bigplay{width:64px;height:64px;background:#168cff;color:#fff;border:0;border-radius:50%;font-size:25px}
+.bottom{position:fixed;left:0;right:0;bottom:0;height:66px;background:#fff;border-top:1px solid #eee;display:flex;justify-content:space-around;align-items:center;z-index:20}
+.nav{border:0;background:none;color:#777;font-size:11px;display:flex;flex-direction:column;align-items:center;gap:4px}
+.nav span{font-size:21px}.nav.active{color:#168cff}
+.empty{text-align:center;color:#777;padding:45px 10px}
 @media(min-width:700px){
-
-  .header{
-    padding-left:30px;
-    padding-right:30px;
-  }
-
-  .section{
-    padding-left:30px;
-    padding-right:30px;
-  }
-
-  .album{
-    min-width:190px;
-  }
-
-  .album img{
-    width:190px;
-    height:190px;
-  }
-
-  .song-list{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:10px;
-  }
-
-  .song{
-    margin:0;
-  }
+ .page{padding:25px 30px;max-width:1100px;margin:auto}
+ .album{min-width:190px}.album img{width:190px;height:190px}
+ .songs{display:grid;grid-template-columns:1fr 1fr;gap:10px}.song{margin:0}
+ .detail-cover{max-width:500px}
 }
 </style>
 </head>
-
 <body>
 
 <header class="header">
-
-  <div class="header-top">
+  <div class="top">
     <div class="logo">🎵 A2Z Malayalam Songs</div>
-    <div class="profile">👤</div>
+    <button class="profile-btn" onclick="showProfile()">👤</button>
   </div>
-
   <div class="search">
-    🔍
-    <input
-      type="text"
-      id="search"
-      placeholder="Search songs, albums, singers..."
-      oninput="searchMusic()">
+    🔍 <input id="searchInput" placeholder="Search songs, albums, singers..." oninput="searchAll()">
   </div>
-
 </header>
 
+<main id="home" class="page">
+  <div class="title">🔥 Latest Albums</div>
+  <div id="albums" class="row"></div>
 
-<section class="section">
+  <div class="title" style="margin-top:24px">🎵 Latest Songs</div>
+  <div id="songs" class="songs"></div>
 
-  <div class="section-title">🔥 Latest Albums</div>
+  <div class="title" style="margin-top:24px">🎤 Popular Singers</div>
+  <div id="singers" class="row"></div>
+</main>
 
-  <div class="horizontal">
+<main id="searchPage" class="page hidden">
+  <div class="title">🔍 Search Results</div>
+  <div id="results"></div>
+</main>
 
-    <div class="album">
-      <img src="https://picsum.photos/300/300?random=1">
-      <div class="album-info">
-        <div class="album-name">Malayalam Hits</div>
-        <div class="album-year">2026 • 10 Songs</div>
-      </div>
-    </div>
+<main id="favoritesPage" class="page hidden">
+  <div class="title">❤️ My Favorites</div>
+  <div id="favorites"></div>
+</main>
 
-    <div class="album">
-      <img src="https://picsum.photos/300/300?random=2">
-      <div class="album-info">
-        <div class="album-name">New Malayalam</div>
-        <div class="album-year">2026 • 8 Songs</div>
-      </div>
-    </div>
-
-    <div class="album">
-      <img src="https://picsum.photos/300/300?random=3">
-      <div class="album-info">
-        <div class="album-name">Evergreen Songs</div>
-        <div class="album-year">2025 • 12 Songs</div>
-      </div>
-    </div>
-
+<main id="profilePage" class="page hidden">
+  <div class="title">👤 Profile</div>
+  <div style="background:#fff;border-radius:16px;padding:25px;text-align:center">
+    <div style="font-size:55px">👤</div>
+    <h2 id="userName">Telegram User</h2>
+    <p id="userUsername" class="muted" style="font-size:14px"></p>
   </div>
+</main>
 
-</section>
+<main id="albumPage" class="page hidden">
+  <button class="back" onclick="goHome()">← Back</button>
+  <img id="albumCover" class="detail-cover">
+  <div id="albumTitle" class="detail-title"></div>
+  <div id="albumMeta" class="detail-sub"></div>
+  <button class="primary" onclick="playAlbum()">▶ Play All</button>
+  <div id="albumSongs"></div>
+</main>
 
-
-<section class="section">
-
-  <div class="section-title">🎵 Latest Songs</div>
-
-  <div class="song-list" id="songList">
-
-    <div class="song" data-search="song one singer one">
-      <img src="https://picsum.photos/150/150?random=11">
-
-      <div class="song-info">
-        <div class="song-name">Song One</div>
-        <div class="song-singer">Singer One • 2026</div>
-      </div>
-
-      <button class="play" onclick="playSong()">▶</button>
+<main id="playerPage" class="page hidden">
+  <button class="back" onclick="goBackFromPlayer()">← Back</button>
+  <div class="player">
+    <img id="playerCover">
+    <h2 id="playerTitle"></h2>
+    <div id="playerSinger" class="detail-sub"></div>
+    <input id="progress" type="range" min="0" max="100" value="0" style="width:90%">
+    <div class="controls">
+      <button class="ctrl" onclick="prevSong()">⏮</button>
+      <button class="bigplay" id="playBtn" onclick="toggleAudio()">▶</button>
+      <button class="ctrl" onclick="nextSong()">⏭</button>
     </div>
-
-
-    <div class="song" data-search="song two singer two">
-      <img src="https://picsum.photos/150/150?random=12">
-
-      <div class="song-info">
-        <div class="song-name">Song Two</div>
-        <div class="song-singer">Singer Two • 2026</div>
-      </div>
-
-      <button class="play" onclick="playSong()">▶</button>
+    <div style="display:flex;justify-content:center;gap:25px">
+      <button class="ctrl" onclick="toggleFavorite(currentSong.id)">❤️</button>
+      <button class="ctrl" onclick="shareSong()">↗</button>
     </div>
-
-
-    <div class="song" data-search="song three singer three">
-      <img src="https://picsum.photos/150/150?random=13">
-
-      <div class="song-info">
-        <div class="song-name">Song Three</div>
-        <div class="song-singer">Singer Three • 2025</div>
-      </div>
-
-      <button class="play" onclick="playSong()">▶</button>
-    </div>
-
-
-    <div class="song" data-search="song four singer four">
-      <img src="https://picsum.photos/150/150?random=14">
-
-      <div class="song-info">
-        <div class="song-name">Song Four</div>
-        <div class="song-singer">Singer Four • 2025</div>
-      </div>
-
-      <button class="play" onclick="playSong()">▶</button>
-    </div>
-
+    <audio id="audio" preload="metadata"></audio>
   </div>
-
-</section>
-
-
-<section class="section">
-
-  <div class="section-title">🎤 Popular Singers</div>
-
-  <div class="horizontal">
-
-    <div class="album">
-      <img src="https://picsum.photos/300/300?random=21">
-      <div class="album-info">
-        <div class="album-name">Singer One</div>
-      </div>
-    </div>
-
-    <div class="album">
-      <img src="https://picsum.photos/300/300?random=22">
-      <div class="album-info">
-        <div class="album-name">Singer Two</div>
-      </div>
-    </div>
-
-    <div class="album">
-      <img src="https://picsum.photos/300/300?random=23">
-      <div class="album-info">
-        <div class="album-name">Singer Three</div>
-      </div>
-    </div>
-
-  </div>
-
-</section>
-
+</main>
 
 <nav class="bottom">
-
-  <button class="nav active">
-    <span>🏠</span>
-    Home
-  </button>
-
-  <button class="nav">
-    <span>🔍</span>
-    Search
-  </button>
-
-  <button class="nav">
-    <span>❤️</span>
-    Favorites
-  </button>
-
-  <button class="nav">
-    <span>👤</span>
-    Profile
-  </button>
-
+  <button class="nav active" onclick="goHome()"><span>🏠</span>Home</button>
+  <button class="nav" onclick="openSearch()"><span>🔍</span>Search</button>
+  <button class="nav" onclick="showFavorites()"><span>❤️</span>Favorites</button>
+  <button class="nav" onclick="showProfile()"><span>👤</span>Profile</button>
 </nav>
 
-
 <script>
+const tg = window.Telegram?.WebApp;
+if(tg){tg.ready();tg.expand();}
 
-const tg = window.Telegram.WebApp;
+const albums=[
+ {id:1,name:"Malayalam Hits",year:"2026",count:10,img:"https://picsum.photos/500/500?random=1"},
+ {id:2,name:"New Malayalam",year:"2026",count:8,img:"https://picsum.photos/500/500?random=2"},
+ {id:3,name:"Evergreen Songs",year:"2025",count:12,img:"https://picsum.photos/500/500?random=3"}
+];
 
-tg.ready();
-tg.expand();
+const singers=[
+ {name:"Singer One",img:"https://picsum.photos/200/200?random=21"},
+ {name:"Singer Two",img:"https://picsum.photos/200/200?random=22"},
+ {name:"Singer Three",img:"https://picsum.photos/200/200?random=23"}
+];
 
+const songs=[
+ {id:1,name:"Song One",singer:"Singer One",year:"2026",album:1,img:"https://picsum.photos/300/300?random=11",audio:""},
+ {id:2,name:"Song Two",singer:"Singer Two",year:"2026",album:1,img:"https://picsum.photos/300/300?random=12",audio:""},
+ {id:3,name:"Song Three",singer:"Singer Three",year:"2025",album:1,img:"https://picsum.photos/300/300?random=13",audio:""},
+ {id:4,name:"Song Four",singer:"Singer One",year:"2025",album:2,img:"https://picsum.photos/300/300?random=14",audio:""}
+];
 
-function searchMusic(){
+let currentSong=null;
+let albumSongIndex=0;
 
-  const query =
-    document.getElementById("search")
-    .value
-    .toLowerCase()
-    .trim();
+const favs=()=>JSON.parse(localStorage.getItem("a2zFavorites")||"[]");
+function saveFavs(a){localStorage.setItem("a2zFavorites",JSON.stringify(a));}
 
-  document.querySelectorAll(".song").forEach(song => {
+function renderHome(){
+ document.getElementById("albums").innerHTML=albums.map(a=>`
+ <button class="album" onclick="openAlbum(${a.id})">
+ <img src="${a.img}"><div class="album-info"><div class="album-name">${a.name}</div>
+ <div class="muted">${a.year} • ${a.count} Songs</div></div></button>`).join("");
 
-    const text =
-      song.dataset.search.toLowerCase();
+ document.getElementById("songs").innerHTML=songs.map(songHTML).join("");
 
-    song.style.display =
-      text.includes(query)
-      ? "flex"
-      : "none";
-
-  });
-
+ document.getElementById("singers").innerHTML=singers.map(s=>`
+ <button class="singer" onclick="searchSinger('${s.name.replaceAll("'","\\'")}')">
+ <img src="${s.img}"><div>${s.name}</div></button>`).join("");
 }
 
-
-function playSong(){
-
-  tg.showAlert("Audio player will be connected next.");
-
+function songHTML(s){
+ const isFav=favs().includes(s.id);
+ return `<div class="song">
+ <img src="${s.img}">
+ <div class="song-info" onclick="openPlayer(${s.id})">
+ <div class="song-name">${s.name}</div><div class="muted">${s.singer} • ${s.year}</div>
+ </div>
+ <button class="heart" onclick="toggleFavorite(${s.id})">${isFav?"❤️":"♡"}</button>
+ <button class="play" onclick="openPlayer(${s.id})">▶</button></div>`;
 }
 
+function hideAll(){
+ ["home","searchPage","favoritesPage","profilePage","albumPage","playerPage"].forEach(id=>document.getElementById(id).classList.add("hidden"));
+}
+function goHome(){hideAll();document.getElementById("home").classList.remove("hidden");window.scrollTo(0,0);}
+function openSearch(){hideAll();document.getElementById("searchPage").classList.remove("hidden");document.getElementById("searchInput").focus();searchAll();}
+function showFavorites(){
+ hideAll();document.getElementById("favoritesPage").classList.remove("hidden");
+ const fs=songs.filter(s=>favs().includes(s.id));
+ document.getElementById("favorites").innerHTML=fs.length?fs.map(songHTML).join(""):`<div class="empty">❤️ No favorite songs yet.</div>`;
+}
+function showProfile(){
+ hideAll();document.getElementById("profilePage").classList.remove("hidden");
+ const u=tg?.initDataUnsafe?.user;
+ document.getElementById("userName").textContent=u?((u.first_name||"")+" "+(u.last_name||"")).trim():"Telegram User";
+ document.getElementById("userUsername").textContent=u?.username?"@"+u.username:"";
+}
+function openAlbum(id){
+ const a=albums.find(x=>x.id===id); if(!a)return;
+ hideAll();document.getElementById("albumPage").classList.remove("hidden");
+ document.getElementById("albumCover").src=a.img;
+ document.getElementById("albumTitle").textContent=a.name;
+ document.getElementById("albumMeta").textContent=a.year+" • "+a.count+" Songs";
+ const list=songs.filter(s=>s.album===id);
+ document.getElementById("albumSongs").innerHTML=list.length?list.map(songHTML).join(""):`<div class="empty">No songs added yet.</div>`;
+ window.scrollTo(0,0);
+}
+function playAlbum(){
+ const list=songs.filter(s=>s.album===albums.find(a=>document.getElementById("albumTitle").textContent===a.name)?.id);
+ if(list.length)openPlayer(list[0].id);
+}
+function openPlayer(id){
+ const s=songs.find(x=>x.id===id);if(!s)return;
+ currentSong=s;hideAll();document.getElementById("playerPage").classList.remove("hidden");
+ document.getElementById("playerCover").src=s.img;
+ document.getElementById("playerTitle").textContent=s.name;
+ document.getElementById("playerSinger").textContent=s.singer+" • "+s.year;
+ const audio=document.getElementById("audio");audio.pause();audio.src=s.audio||"";
+ document.getElementById("playBtn").textContent="▶";
+ document.getElementById("progress").value=0;
+}
+function toggleAudio(){
+ if(!currentSong)return;
+ const audio=document.getElementById("audio");
+ if(!currentSong.audio){
+   if(tg)tg.showAlert("Audio URL will be connected from Google Drive later.");
+   else alert("Audio URL will be connected from Google Drive later.");
+   return;
+ }
+ if(audio.paused){audio.play();document.getElementById("playBtn").textContent="Ⅱ";}
+ else{audio.pause();document.getElementById("playBtn").textContent="▶";}
+}
+function prevSong(){
+ if(!currentSong)return;let i=songs.findIndex(s=>s.id===currentSong.id);openPlayer(songs[(i-1+songs.length)%songs.length].id);
+}
+function nextSong(){
+ if(!currentSong)return;let i=songs.findIndex(s=>s.id===currentSong.id);openPlayer(songs[(i+1)%songs.length].id);
+}
+function goBackFromPlayer(){goHome();}
+function toggleFavorite(id){
+ let a=favs();a=a.includes(id)?a.filter(x=>x!==id):[...a,id];saveFavs(a);
+ if(!document.getElementById("favoritesPage").classList.contains("hidden"))showFavorites();else renderHome();
+}
+function shareSong(){
+ if(!currentSong)return;
+ const text=currentSong.name+" - "+currentSong.singer;
+ if(navigator.share)navigator.share({title:currentSong.name,text});
+ else if(tg?.switchInlineQuery)tg.switchInlineQuery(text);
+ else navigator.clipboard?.writeText(text);
+}
+function searchSinger(name){
+ document.getElementById("searchInput").value=name;openSearch();
+}
+function searchAll(){
+ const q=document.getElementById("searchInput").value.toLowerCase().trim();
+ const results=q?songs.filter(s=>(s.name+" "+s.singer+" "+s.year).toLowerCase().includes(q)):songs;
+ document.getElementById("results").innerHTML=results.length?results.map(songHTML).join(""):`<div class="empty">No results found.</div>`;
+}
+const audio=document.getElementById("audio");
+audio.addEventListener("timeupdate",()=>{if(audio.duration)document.getElementById("progress").value=(audio.currentTime/audio.duration)*100});
+document.getElementById("progress").addEventListener("input",e=>{if(audio.duration)audio.currentTime=(e.target.value/100)*audio.duration});
+audio.addEventListener("ended",nextSong);
+
+renderHome();
 </script>
-
 </body>
 </html>
