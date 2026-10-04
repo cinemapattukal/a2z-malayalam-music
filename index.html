@@ -189,7 +189,7 @@ async function loadFirebaseData(){
           album: albumDoc.id,
           img: d.image || d.img || "",
           audio: d.audioUrl || d.audio || "",
-          youtube: d.youtubeUrl || d.youtube || "",
+          youtube: d.youtubeUrl || d.youtubeURL || d.youtube || d.youtubeLink || d.videoUrl || d.videoURL || d.video || "",
           duration: d.duration || "",
           lyrics: d.lyrics || "",
           music: d.music || ""
@@ -283,6 +283,7 @@ let ytPlayer=null;
 let ytApiReady=false;
 let pendingYoutubeId=null;
 let ytTimer=null;
+let ytPlayWhenReady=false;
 
 function getYoutubeId(url){
   if(!url)return "";
@@ -298,8 +299,9 @@ window.onYouTubeIframeAPIReady=function(){
   if(pendingYoutubeId) initYoutubePlayer(pendingYoutubeId);
 };
 
-function initYoutubePlayer(videoId){
+function initYoutubePlayer(videoId, playWhenReady=false){
   pendingYoutubeId=videoId;
+  if(playWhenReady) ytPlayWhenReady=true;
   if(!ytApiReady)return;
   if(ytPlayer && typeof ytPlayer.loadVideoById==="function"){
     ytPlayer.loadVideoById(videoId);
@@ -311,7 +313,12 @@ function initYoutubePlayer(videoId){
     videoId:videoId,
     playerVars:{playsinline:1,controls:0,rel:0,modestbranding:1},
     events:{
-      onReady:function(){},
+      onReady:function(){
+        if(ytPlayWhenReady){
+          ytPlayWhenReady=false;
+          setTimeout(function(){ if(ytPlayer && typeof ytPlayer.playVideo==="function") ytPlayer.playVideo(); }, 100);
+        }
+      },
       onStateChange:function(e){
         const btn=document.getElementById("playBtn");
         if(e.data===YT.PlayerState.PLAYING){
@@ -386,10 +393,7 @@ function toggleAudio(){
   if(ytId){
     if(!ytPlayer || typeof ytPlayer.getPlayerState!=="function"){
       pendingYoutubeId=ytId;
-      initYoutubePlayer(ytId);
-      setTimeout(function(){
-        if(ytPlayer && typeof ytPlayer.playVideo==="function")ytPlayer.playVideo();
-      },500);
+      initYoutubePlayer(ytId,true);
       return;
     }
     const state=ytPlayer.getPlayerState();
