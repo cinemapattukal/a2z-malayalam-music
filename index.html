@@ -136,7 +136,7 @@ button{font-family:inherit;cursor:pointer}
       <button class="ctrl" onclick="nextSong()">⏭</button>
     </div>
     <div style="display:flex;justify-content:center;gap:25px">
-      <button class="ctrl" onclick="toggleFavorite(currentSong.id)">❤️</button>
+      <button class="ctrl" id="favoriteBtn" onclick="toggleFavorite(currentSong.id)">♡</button>
       <button class="ctrl" onclick="shareSong()">↗</button>
     </div>
     <audio id="audio" preload="metadata"></audio>
@@ -236,14 +236,13 @@ function renderHome(){
 }
 
 function songHTML(s){
- const isFav=favs().includes(s.id);
- return `<div class="song">
+ const songId=JSON.stringify(String(s.id)).replace(/</g,"\\u003c");
+ return `<div class="song" onclick='openPlayer(${songId})'>
  <img src="${s.img}">
- <div class="song-info" onclick="openPlayer(${s.id})">
+ <div class="song-info">
  <div class="song-name">${s.name}</div><div class="muted">${s.singer} • ${s.year}</div>
  </div>
- <button class="heart" onclick="toggleFavorite(${s.id})">${isFav?"❤️":"♡"}</button>
- <button class="play" onclick="openPlayer(${s.id})">▶</button></div>`;
+ <button class="play" onclick='event.stopPropagation();openPlayer(${songId})'>▶</button></div>`;
 }
 
 function hideAll(){
@@ -285,6 +284,8 @@ function openPlayer(id){
  const audio=document.getElementById("audio");audio.pause();audio.src=s.audio||"";
  document.getElementById("playBtn").textContent="▶";
  document.getElementById("progress").value=0;
+ const favoriteBtn=document.getElementById("favoriteBtn");
+ if(favoriteBtn)favoriteBtn.textContent=favs().map(String).includes(String(s.id))?"❤️":"♡";
 }
 function toggleAudio(){
  if(!currentSong)return;
@@ -305,8 +306,17 @@ function nextSong(){
 }
 function goBackFromPlayer(){goHome();}
 function toggleFavorite(id){
- let a=favs();a=a.includes(id)?a.filter(x=>x!==id):[...a,id];saveFavs(a);
- if(!document.getElementById("favoritesPage").classList.contains("hidden"))showFavorites();else renderHome();
+ id=String(id);
+ let a=favs().map(String);
+ a=a.includes(id)?a.filter(x=>x!==id):[...a,id];
+ saveFavs(a);
+
+ const btn=document.getElementById("favoriteBtn");
+ if(btn && currentSong && String(currentSong.id)===id){
+   btn.textContent=a.includes(id)?"❤️":"♡";
+ }
+
+ if(!document.getElementById("favoritesPage").classList.contains("hidden"))showFavorites();
 }
 function shareSong(){
  if(!currentSong)return;
