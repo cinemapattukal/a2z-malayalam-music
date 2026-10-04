@@ -1,16 +1,451 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>A2Z Malayalam Songs</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>A2Z Malayalam Songs</title>
+
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+<style>
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+}
+
+body{
+  font-family:Arial,sans-serif;
+  background:#f6f7f9;
+  color:#151515;
+  padding-bottom:80px;
+}
+
+.header{
+  background:#fff;
+  padding:18px 16px 14px;
+  position:sticky;
+  top:0;
+  z-index:10;
+  border-bottom:1px solid #eee;
+}
+
+.header-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+
+.logo{
+  font-size:21px;
+  font-weight:700;
+}
+
+.profile{
+  width:40px;
+  height:40px;
+  border-radius:50%;
+  background:#eef1f5;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:20px;
+}
+
+.search{
+  margin-top:14px;
+  background:#f1f3f5;
+  border-radius:13px;
+  padding:12px 15px;
+  display:flex;
+  align-items:center;
+  gap:9px;
+}
+
+.search input{
+  border:0;
+  outline:0;
+  background:transparent;
+  width:100%;
+  font-size:15px;
+}
+
+.section{
+  padding:20px 15px 0;
+}
+
+.section-title{
+  font-size:19px;
+  font-weight:700;
+  margin-bottom:13px;
+}
+
+.horizontal{
+  display:flex;
+  gap:13px;
+  overflow-x:auto;
+  scrollbar-width:none;
+}
+
+.horizontal::-webkit-scrollbar{
+  display:none;
+}
+
+.album{
+  min-width:145px;
+  background:#fff;
+  border-radius:14px;
+  overflow:hidden;
+  box-shadow:0 2px 8px rgba(0,0,0,.06);
+}
+
+.album img{
+  width:145px;
+  height:145px;
+  object-fit:cover;
+  display:block;
+}
+
+.album-info{
+  padding:10px;
+}
+
+.album-name{
+  font-weight:600;
+  font-size:14px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.album-year{
+  color:#777;
+  font-size:12px;
+  margin-top:4px;
+}
+
+.song{
+  display:flex;
+  align-items:center;
+  background:#fff;
+  border-radius:13px;
+  padding:9px;
+  margin-bottom:9px;
+}
+
+.song img{
+  width:55px;
+  height:55px;
+  object-fit:cover;
+  border-radius:9px;
+}
+
+.song-info{
+  flex:1;
+  min-width:0;
+  padding:0 11px;
+}
+
+.song-name{
+  font-size:14px;
+  font-weight:600;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.song-singer{
+  color:#777;
+  font-size:12px;
+  margin-top:5px;
+}
+
+.play{
+  width:40px;
+  height:40px;
+  border-radius:50%;
+  border:0;
+  background:#168cff;
+  color:#fff;
+  font-size:17px;
+}
+
+.bottom{
+  position:fixed;
+  bottom:0;
+  left:0;
+  right:0;
+  height:65px;
+  background:#fff;
+  border-top:1px solid #eee;
+  display:flex;
+  justify-content:space-around;
+  align-items:center;
+  z-index:20;
+}
+
+.nav{
+  border:0;
+  background:none;
+  color:#777;
+  font-size:11px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:4px;
+}
+
+.nav span{
+  font-size:21px;
+}
+
+.nav.active{
+  color:#168cff;
+}
+
+@media(min-width:700px){
+
+  .header{
+    padding-left:30px;
+    padding-right:30px;
+  }
+
+  .section{
+    padding-left:30px;
+    padding-right:30px;
+  }
+
+  .album{
+    min-width:190px;
+  }
+
+  .album img{
+    width:190px;
+    height:190px;
+  }
+
+  .song-list{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+  }
+
+  .song{
+    margin:0;
+  }
+}
+</style>
 </head>
 
 <body>
 
-  <h1>🎵 A2Z Malayalam Songs</h1>
+<header class="header">
 
-  <p>Telegram Mini Music App</p>
+  <div class="header-top">
+    <div class="logo">🎵 A2Z Malayalam Songs</div>
+    <div class="profile">👤</div>
+  </div>
+
+  <div class="search">
+    🔍
+    <input
+      type="text"
+      id="search"
+      placeholder="Search songs, albums, singers..."
+      oninput="searchMusic()">
+  </div>
+
+</header>
+
+
+<section class="section">
+
+  <div class="section-title">🔥 Latest Albums</div>
+
+  <div class="horizontal">
+
+    <div class="album">
+      <img src="https://picsum.photos/300/300?random=1">
+      <div class="album-info">
+        <div class="album-name">Malayalam Hits</div>
+        <div class="album-year">2026 • 10 Songs</div>
+      </div>
+    </div>
+
+    <div class="album">
+      <img src="https://picsum.photos/300/300?random=2">
+      <div class="album-info">
+        <div class="album-name">New Malayalam</div>
+        <div class="album-year">2026 • 8 Songs</div>
+      </div>
+    </div>
+
+    <div class="album">
+      <img src="https://picsum.photos/300/300?random=3">
+      <div class="album-info">
+        <div class="album-name">Evergreen Songs</div>
+        <div class="album-year">2025 • 12 Songs</div>
+      </div>
+    </div>
+
+  </div>
+
+</section>
+
+
+<section class="section">
+
+  <div class="section-title">🎵 Latest Songs</div>
+
+  <div class="song-list" id="songList">
+
+    <div class="song" data-search="song one singer one">
+      <img src="https://picsum.photos/150/150?random=11">
+
+      <div class="song-info">
+        <div class="song-name">Song One</div>
+        <div class="song-singer">Singer One • 2026</div>
+      </div>
+
+      <button class="play" onclick="playSong()">▶</button>
+    </div>
+
+
+    <div class="song" data-search="song two singer two">
+      <img src="https://picsum.photos/150/150?random=12">
+
+      <div class="song-info">
+        <div class="song-name">Song Two</div>
+        <div class="song-singer">Singer Two • 2026</div>
+      </div>
+
+      <button class="play" onclick="playSong()">▶</button>
+    </div>
+
+
+    <div class="song" data-search="song three singer three">
+      <img src="https://picsum.photos/150/150?random=13">
+
+      <div class="song-info">
+        <div class="song-name">Song Three</div>
+        <div class="song-singer">Singer Three • 2025</div>
+      </div>
+
+      <button class="play" onclick="playSong()">▶</button>
+    </div>
+
+
+    <div class="song" data-search="song four singer four">
+      <img src="https://picsum.photos/150/150?random=14">
+
+      <div class="song-info">
+        <div class="song-name">Song Four</div>
+        <div class="song-singer">Singer Four • 2025</div>
+      </div>
+
+      <button class="play" onclick="playSong()">▶</button>
+    </div>
+
+  </div>
+
+</section>
+
+
+<section class="section">
+
+  <div class="section-title">🎤 Popular Singers</div>
+
+  <div class="horizontal">
+
+    <div class="album">
+      <img src="https://picsum.photos/300/300?random=21">
+      <div class="album-info">
+        <div class="album-name">Singer One</div>
+      </div>
+    </div>
+
+    <div class="album">
+      <img src="https://picsum.photos/300/300?random=22">
+      <div class="album-info">
+        <div class="album-name">Singer Two</div>
+      </div>
+    </div>
+
+    <div class="album">
+      <img src="https://picsum.photos/300/300?random=23">
+      <div class="album-info">
+        <div class="album-name">Singer Three</div>
+      </div>
+    </div>
+
+  </div>
+
+</section>
+
+
+<nav class="bottom">
+
+  <button class="nav active">
+    <span>🏠</span>
+    Home
+  </button>
+
+  <button class="nav">
+    <span>🔍</span>
+    Search
+  </button>
+
+  <button class="nav">
+    <span>❤️</span>
+    Favorites
+  </button>
+
+  <button class="nav">
+    <span>👤</span>
+    Profile
+  </button>
+
+</nav>
+
+
+<script>
+
+const tg = window.Telegram.WebApp;
+
+tg.ready();
+tg.expand();
+
+
+function searchMusic(){
+
+  const query =
+    document.getElementById("search")
+    .value
+    .toLowerCase()
+    .trim();
+
+  document.querySelectorAll(".song").forEach(song => {
+
+    const text =
+      song.dataset.search.toLowerCase();
+
+    song.style.display =
+      text.includes(query)
+      ? "flex"
+      : "none";
+
+  });
+
+}
+
+
+function playSong(){
+
+  tg.showAlert("Audio player will be connected next.");
+
+}
+
+</script>
 
 </body>
 </html>
