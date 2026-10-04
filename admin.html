@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>A2Z Malayalam Songs — Admin</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f5f7fa;color:#151515}
+button,input{font:inherit}
+.hidden{display:none!important}
+.wrap{max-width:1050px;margin:auto;padding:20px}
+.card{background:#fff;border-radius:16px;padding:20px;box-shadow:0 4px 18px rgba(0,0,0,.07)}
+.login{max-width:430px;margin:70px auto}
+h1,h2{margin-top:0}
+label{display:block;font-size:13px;font-weight:700;margin:14px 0 6px}
+input{width:100%;padding:13px;border:1px solid #ddd;border-radius:10px;outline:none}
+.primary{width:100%;margin-top:18px;padding:13px;border:0;border-radius:10px;background:#168cff;color:#fff;font-weight:700;cursor:pointer}
+.error{color:#d33;font-size:13px;margin-top:12px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:20px}
+.logout{border:0;border-radius:9px;padding:10px 14px;background:#eee;cursor:pointer}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}
+.stat{background:#fff;border-radius:14px;padding:20px}
+.stat b{font-size:28px;display:block;margin-top:7px}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}
+.action{border:0;border-radius:10px;padding:12px 16px;background:#168cff;color:#fff;cursor:pointer}
+@media(max-width:650px){.grid{grid-template-columns:1fr}.login{margin:30px auto}}
+</style>
+</head>
+<body>
+
+<section id="loginPage" class="wrap">
+  <div class="card login">
+    <h1>🔐 Admin Login</h1>
+    <p style="color:#777">A2Z Malayalam Songs</p>
+
+    <label>Email</label>
+    <input id="email" type="email" autocomplete="username" placeholder="Admin email">
+
+    <label>Password</label>
+    <input id="password" type="password" autocomplete="current-password" placeholder="Password">
+
+    <button class="primary" onclick="login()">Login</button>
+    <div id="loginError" class="error"></div>
+  </div>
+</section>
+
+<section id="adminPage" class="wrap hidden">
+  <div class="top">
+    <div>
+      <h1>🎵 Admin Dashboard</h1>
+      <div id="adminEmail" style="color:#777"></div>
+    </div>
+    <button class="logout" onclick="logout()">Logout</button>
+  </div>
+
+  <div class="grid">
+    <div class="stat">Albums<b id="albumCount">0</b></div>
+    <div class="stat">Songs<b id="songCount">0</b></div>
+    <div class="stat">Singers<b id="singerCount">0</b></div>
+  </div>
+
+  <div class="card" style="margin-top:20px">
+    <h2>Admin Panel</h2>
+    <div class="actions">
+      <button class="action" onclick="notReady('Add Album')">＋ Add Album</button>
+      <button class="action" onclick="notReady('Add Song')">＋ Add Song</button>
+      <button class="action" onclick="notReady('Add Singer')">＋ Add Singer</button>
+    </div>
+    <p id="message" style="color:#777;margin-top:18px">
+      Login is ready. Album, Song and Singer management will be added next.
+    </p>
+  </div>
+</section>
+
+<script>
+const firebaseConfig={
+  apiKey:"AIzaSyA9rRMUOfcksZjZj04RQLkKrXsKzXKHmRI",
+  authDomain:"malayalamsongs-5916d.firebaseapp.com",
+  projectId:"malayalamsongs-5916d",
+  storageBucket:"malayalamsongs-5916d.firebasestorage.app",
+  messagingSenderId:"44232575519",
+  appId:"1:44232575519:web:ceaf71571d2d693a7d232a",
+  measurementId:"G-LHZR62BRNH"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth();
+const db=firebase.firestore();
+
+function login(){
+  const email=document.getElementById("email").value.trim();
+  const password=document.getElementById("password").value;
+  const error=document.getElementById("loginError");
+  error.textContent="";
+  if(!email||!password){error.textContent="Email and password required.";return;}
+
+  auth.signInWithEmailAndPassword(email,password)
+    .catch(err=>{error.textContent=err.message;});
+}
+
+function logout(){
+  auth.signOut();
+}
+
+function notReady(name){
+  document.getElementById("message").textContent=name+" section will be connected to Firestore next.";
+}
+
+async function loadCounts(){
+  try{
+    const albums=await db.collection("albums").get();
+    document.getElementById("albumCount").textContent=albums.size;
+
+    let totalSongs=0;
+    const singerSet=new Set();
+
+    await Promise.all(albums.docs.map(async album=>{
+      const snap=await db.collection("albums").doc(album.id).collection("songs").get();
+      totalSongs+=snap.size;
+      snap.docs.forEach(doc=>{
+        const s=doc.data();
+        if(s.singer)singerSet.add(String(s.singer));
+      });
+    }));
+
+    document.getElementById("songCount").textContent=totalSongs;
+    document.getElementById("singerCount").textContent=singerSet.size;
+  }catch(e){
+    console.error(e);
+  }
+}
+
+auth.onAuthStateChanged(user=>{
+  if(user){
+    document.getElementById("loginPage").classList.add("hidden");
+    document.getElementById("adminPage").classList.remove("hidden");
+    document.getElementById("adminEmail").textContent=user.email||"";
+    loadCounts();
+  }else{
+    document.getElementById("adminPage").classList.add("hidden");
+    document.getElementById("loginPage").classList.remove("hidden");
+  }
+});
+</script>
+</body>
+</html>
