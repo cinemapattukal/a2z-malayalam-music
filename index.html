@@ -188,8 +188,8 @@ async function loadFirebaseData(){
           year: String(d.released ?? d.year ?? ""),
           album: albumDoc.id,
           img: d.image || d.img || "",
-          audio: d.audioUrl || d.audio || "",
-          youtube: d.youtubeUrl || d.youtubeURL || d.youtube || d.youtubeLink || d.videoUrl || d.videoURL || d.video || "",
+          audio: (getYoutubeId(d.audioUrl || d.audio || "") ? "" : (d.audioUrl || d.audio || "")),
+          youtube: d.youtubeUrl || d.youtubeURL || d.youtube || d.youtubeLink || d.videoUrl || d.videoURL || d.video || (getYoutubeId(d.audioUrl || d.audio || "") ? (d.audioUrl || d.audio) : ""),
           duration: d.duration || "",
           lyrics: d.lyrics || "",
           music: d.music || ""
