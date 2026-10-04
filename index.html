@@ -210,7 +210,9 @@ async function loadFirebaseData(){
     renderHome();
   }catch(err){
     console.error("Firebase load error:", err);
-    renderHome();
+    document.getElementById("albums").innerHTML = `<div class="empty">Firebase data load failed.<br><small>${String(err.message || err)}</small></div>`;
+    document.getElementById("songs").innerHTML = "";
+    document.getElementById("singers").innerHTML = "";
   }
 }
 
@@ -222,7 +224,7 @@ function saveFavs(a){localStorage.setItem("a2zFavorites",JSON.stringify(a));}
 
 function renderHome(){
  document.getElementById("albums").innerHTML=albums.map(a=>`
- <button class="album" onclick="openAlbum(${a.id})">
+ <button class="album" onclick="openAlbum(\'${a.id.replaceAll("\'","\\\'")}\')">
  <img src="${a.img}"><div class="album-info"><div class="album-name">${a.name}</div>
  <div class="muted">${a.year} • ${a.count} Songs</div></div></button>`).join("");
 
