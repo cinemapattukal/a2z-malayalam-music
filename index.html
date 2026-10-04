@@ -250,13 +250,39 @@ function jsArg(value){
 function songHTML(s){
  const isFav=favs().map(String).includes(String(s.id));
  const idArg=jsArg(s.id);
- return `<div class="song" onclick="openPlayer(${idArg})">
- <img src="${s.img}">
+ return `<div class="song" data-song-id="${String(s.id).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}" role="button" tabindex="0">
+ <img src="${s.img}" alt="">
  <div class="song-info">
  <div class="song-name">${s.name}</div><div class="muted">${s.singer} • ${s.year}</div></div>
- <button class="heart" onclick="event.stopPropagation();toggleFavorite(${idArg})">${isFav?'❤️':'♡'}</button>
- <button class="play" onclick="event.stopPropagation();openPlayer(${idArg})">▶</button></div>`;
+ <button type="button" class="heart" data-action="favorite" data-song-id="${String(s.id).replace(/"/g,"&quot;")}">${isFav?'❤️':'♡'}</button>
+ <button type="button" class="play" data-action="play" data-song-id="${String(s.id).replace(/"/g,"&quot;")}">▶</button></div>`;
 }
+
+// Reliable song tap handler. Uses event delegation so it works for songs
+// rendered later from Firebase (Home, Album, Search and Favorites).
+document.addEventListener('click', function(e){
+ const actionEl = e.target.closest('[data-action]');
+ if(actionEl){
+   const id = actionEl.getAttribute('data-song-id');
+   if(actionEl.getAttribute('data-action') === 'favorite'){
+     e.preventDefault(); e.stopPropagation(); toggleFavorite(id);
+   }else if(actionEl.getAttribute('data-action') === 'play'){
+     e.preventDefault(); e.stopPropagation(); openPlayer(id);
+   }
+   return;
+ }
+ const songEl = e.target.closest('.song[data-song-id]');
+ if(songEl){
+   e.preventDefault();
+   openPlayer(songEl.getAttribute('data-song-id'));
+ }
+});
+
+document.addEventListener('keydown', function(e){
+ if(e.key !== 'Enter' && e.key !== ' ') return;
+ const songEl = e.target.closest('.song[data-song-id]');
+ if(songEl){ e.preventDefault(); openPlayer(songEl.getAttribute('data-song-id')); }
+});
 
 function hideAll(){
  ["home","searchPage","favoritesPage","profilePage","albumPage","playerPage"].forEach(id=>document.getElementById(id).classList.add("hidden"));
