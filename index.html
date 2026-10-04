@@ -236,15 +236,20 @@ function renderHome(){
  <img src="${s.img}"><div>${s.name}</div></button>`).join("");
 }
 
+function jsArg(value){
+ return JSON.stringify(String(value)).replace(/</g,"\u003c").replace(/>/g,"\u003e").replace(/&/g,"\u0026");
+}
+
 function songHTML(s){
- const isFav=favs().includes(s.id);
+ const isFav=favs().map(String).includes(String(s.id));
+ const idArg=jsArg(s.id);
  return `<div class="song">
  <img src="${s.img}">
- <div class="song-info" onclick="openPlayer(${s.id})">
+ <div class="song-info" onclick="openPlayer(${idArg})">
  <div class="song-name">${s.name}</div><div class="muted">${s.singer} • ${s.year}</div>
  </div>
- <button class="heart" onclick="toggleFavorite(${s.id})">${isFav?"❤️":"♡"}</button>
- <button class="play" onclick="openPlayer(${s.id})">▶</button></div>`;
+ <button class="heart" onclick="toggleFavorite(${idArg})">${isFav?"❤️":"♡"}</button>
+ <button class="play" onclick="openPlayer(${idArg})">▶</button></div>`;
 }
 
 function hideAll(){
@@ -311,16 +316,37 @@ function openPlayer(id){
  document.getElementById("progress").value=0;
  updateTimeDisplay();
 }
+function isYouTubeUrl(url){
+  return /(?:youtube\.com|youtu\.be)/i.test(String(url||""));
+}
+
 function toggleAudio(){
- if(!currentSong)return;
- const audio=document.getElementById("audio");
- if(!currentSong.audio){
-   if(tg)tg.showAlert("Audio URL will be connected from Google Drive later.");
-   else alert("Audio URL will be connected from Google Drive later.");
-   return;
- }
- if(audio.paused){audio.play();document.getElementById("playBtn").textContent="Ⅱ";}
- else{audio.pause();document.getElementById("playBtn").textContent="▶";}
+  if(!currentSong)return;
+  const audio=document.getElementById("audio");
+  const url=String(currentSong.audio||"").trim();
+
+  if(!url){
+    const msg="No direct audio URL. Add a public MP3/M4A/FLAC file URL in audioUrl.";
+    if(tg)tg.showAlert(msg); else alert(msg);
+    return;
+  }
+
+  if(isYouTubeUrl(url)){
+    const msg="This audioUrl is a YouTube link. A YouTube page URL cannot be used directly by HTML audio. Use a direct public MP3/M4A/FLAC URL in audioUrl.";
+    if(tg)tg.showAlert(msg); else alert(msg);
+    return;
+  }
+
+  if(audio.paused){
+    const p=audio.play();
+    if(p && p.catch)p.catch(err=>{
+      console.error("Audio play failed:",err);
+      const msg="Audio could not be played. Check that audioUrl is a direct public audio file URL.";
+      if(tg)tg.showAlert(msg); else alert(msg);
+    });
+  }else{
+    audio.pause();
+  }
 }
 function prevSong(){
  if(!currentSong)return;let i=songs.findIndex(s=>s.id===currentSong.id);openPlayer(songs[(i-1+songs.length)%songs.length].id);
@@ -330,7 +356,10 @@ function nextSong(){
 }
 function goBackFromPlayer(){goHome();}
 function toggleFavorite(id){
- let a=favs();a=a.includes(id)?a.filter(x=>x!==id):[...a,id];saveFavs(a);
+ id=String(id);
+ let a=favs().map(String);
+ a=a.includes(id)?a.filter(x=>x!==id):[...a,id];
+ saveFavs(a);
  if(!document.getElementById("favoritesPage").classList.contains("hidden"))showFavorites();else renderHome();
 }
 function shareSong(){
