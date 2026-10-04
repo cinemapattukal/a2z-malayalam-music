@@ -20,6 +20,7 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 </script>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://www.youtube.com/iframe_api"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:Arial,sans-serif;background:#f6f7f9;color:#151515;padding-bottom:82px}
@@ -40,7 +41,7 @@ button{font-family:inherit;cursor:pointer}
 .album-info{padding:10px}
 .album-name{font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .muted{color:#777;font-size:12px;margin-top:4px}
-.song{display:flex;align-items:center;background:#fff;border-radius:13px;padding:9px;margin-bottom:9px}
+.song{display:flex;align-items:center;background:#fff;border-radius:13px;padding:9px;margin-bottom:9px;cursor:pointer}
 .song img{width:56px;height:56px;border-radius:9px;object-fit:cover}
 .song-info{flex:1;min-width:0;padding:0 11px}
 .song-name{font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -64,6 +65,7 @@ button{font-family:inherit;cursor:pointer}
 .nav{border:0;background:none;color:#777;font-size:11px;display:flex;flex-direction:column;align-items:center;gap:4px}
 .nav span{font-size:21px}.nav.active{color:#168cff}
 .empty{text-align:center;color:#777;padding:45px 10px}
+#youtubePlayer{position:fixed;width:1px;height:1px;left:-10px;top:-10px;opacity:0;pointer-events:none}
 @media(min-width:700px){
  .page{padding:25px 30px;max-width:1100px;margin:auto}
  .album{min-width:190px}.album img{width:190px;height:190px}
@@ -141,6 +143,7 @@ button{font-family:inherit;cursor:pointer}
       <button class="ctrl" onclick="shareSong()">↗</button>
     </div>
     <audio id="audio" preload="metadata"></audio>
+    <div id="youtubePlayer"></div>
   </div>
 </main>
 
@@ -219,6 +222,10 @@ async function loadFirebaseData(){
 
 let currentSong=null;
 let albumSongIndex=0;
+let currentAlbumId=null;
+let ytPlayer=null;
+let ytReady=false;
+let ytTimer=null;
 
 const favs=()=>JSON.parse(localStorage.getItem("a2zFavorites")||"[]");
 function saveFavs(a){localStorage.setItem("a2zFavorites",JSON.stringify(a));}
@@ -243,13 +250,12 @@ function jsArg(value){
 function songHTML(s){
  const isFav=favs().map(String).includes(String(s.id));
  const idArg=jsArg(s.id);
- return `<div class="song">
+ return `<div class="song" onclick="openPlayer(${idArg})">
  <img src="${s.img}">
- <div class="song-info" onclick="openPlayer(${idArg})">
- <div class="song-name">${s.name}</div><div class="muted">${s.singer} • ${s.year}</div>
- </div>
- <button class="heart" onclick="toggleFavorite(${idArg})">${isFav?"❤️":"♡"}</button>
- <button class="play" onclick="openPlayer(${idArg})">▶</button></div>`;
+ <div class="song-info">
+ <div class="song-name">${s.name}</div><div class="muted">${s.singer} • ${s.year}</div></div>
+ <button class="heart" onclick="event.stopPropagation();toggleFavorite(${idArg})">${isFav?'❤️':'♡'}</button>
+ <button class="play" onclick="event.stopPropagation();openPlayer(${idArg})">▶</button></div>`;
 }
 
 function hideAll(){
@@ -259,7 +265,7 @@ function goHome(){hideAll();document.getElementById("home").classList.remove("hi
 function openSearch(){hideAll();document.getElementById("searchPage").classList.remove("hidden");document.getElementById("searchInput").focus();searchAll();}
 function showFavorites(){
  hideAll();document.getElementById("favoritesPage").classList.remove("hidden");
- const fs=songs.filter(s=>favs().includes(s.id));
+ const fs=songs.filter(s=>favs().map(String).includes(String(s.id)));
  document.getElementById("favorites").innerHTML=fs.length?fs.map(songHTML).join(""):`<div class="empty">❤️ No favorite songs yet.</div>`;
 }
 function showProfile(){
@@ -269,7 +275,8 @@ function showProfile(){
  document.getElementById("userUsername").textContent=u?.username?"@"+u.username:"";
 }
 function openAlbum(id){
- const a=albums.find(x=>x.id===id); if(!a)return;
+ const a=albums.find(x=>String(x.id)===String(id)); if(!a)return;
+ currentAlbumId=a.id;
  hideAll();document.getElementById("albumPage").classList.remove("hidden");
  document.getElementById("albumCover").src=a.img;
  document.getElementById("albumTitle").textContent=a.name;
@@ -279,7 +286,7 @@ function openAlbum(id){
  window.scrollTo(0,0);
 }
 function playAlbum(){
- const list=songs.filter(s=>String(s.album)===String(albums.find(a=>document.getElementById("albumTitle").textContent===a.name)?.id));
+ const list=songs.filter(s=>String(s.album)===String(currentAlbumId));
  if(list.length)openPlayer(list[0].id);
 }
 function formatTime(seconds){
@@ -287,72 +294,113 @@ function formatTime(seconds){
  const total=Math.floor(seconds);
  const h=Math.floor(total/3600);
  const m=Math.floor((total%3600)/60);
- const s=total%60;
- return h>0 ? `${h}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}` : `${m}:${String(s).padStart(2,"0")}`;
+ const sec=total%60;
+ return h>0 ? `${h}:${String(m).padStart(2,"0")}:${String(sec).padStart(2,"0")}` : `${m}:${String(sec).padStart(2,"0")}`;
 }
 
+window.onYouTubeIframeAPIReady=function(){
+ ytReady=true;
+ try{
+  ytPlayer=new YT.Player('youtubePlayer',{
+   width:'1',height:'1',videoId:'',
+   playerVars:{controls:0,playsinline:1,rel:0,modestbranding:1},
+   events:{
+    onStateChange:function(e){
+     if(e.data===YT.PlayerState.PLAYING){document.getElementById('playBtn').textContent='Ⅱ';startYTTimer();}
+     else if(e.data===YT.PlayerState.PAUSED){document.getElementById('playBtn').textContent='▶';stopYTTimer();}
+     else if(e.data===YT.PlayerState.ENDED){document.getElementById('playBtn').textContent='▶';stopYTTimer();nextSong();}
+    },
+    onError:function(e){
+     console.error('YouTube error',e.data);
+     const msg='YouTube song could not be played. This video may be unavailable, private, age-restricted, or embedding may be disabled.';
+     if(tg)tg.showAlert(msg);else alert(msg);
+    }
+   }
+  });
+ }catch(err){console.error('YouTube player init failed',err);}
+};
+
+function youtubeId(url){
+ const u=String(url||'').trim(); if(!u)return '';
+ try{
+  const x=new URL(u);
+  if(x.hostname==='youtu.be') return x.pathname.replace(/^\//,'').split('/')[0];
+  if(x.hostname.includes('youtube.com')){
+   const v=x.searchParams.get('v'); if(v)return v;
+   const m=x.pathname.match(/\/(?:embed|shorts|live)\/([^/?]+)/i); if(m)return m[1];
+  }
+ }catch(e){}
+ const m=u.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/))([^&?\/]+)/i);
+ return m?m[1]:'';
+}
+function isYouTubeUrl(url){return !!youtubeId(url);}
+function isDirectAudio(url){return /\.(mp3|m4a|aac|wav|ogg|oga|flac)(?:[?#].*)?$/i.test(String(url||''));}
+function stopYTTimer(){if(ytTimer){clearInterval(ytTimer);ytTimer=null;}}
+function startYTTimer(){
+ stopYTTimer();
+ ytTimer=setInterval(()=>{
+  if(!ytPlayer||typeof ytPlayer.getCurrentTime!=='function')return;
+  const cur=Number(ytPlayer.getCurrentTime()||0),dur=Number(ytPlayer.getDuration()||0);
+  document.getElementById('progress').value=dur>0?(cur/dur)*100:0;
+  document.getElementById('timeDisplay').textContent=`${formatTime(cur)} / ${formatTime(dur)}`;
+ },250);
+}
+function loadYouTubeSong(url){
+ const id=youtubeId(url); if(!id)return;
+ if(!ytPlayer||typeof ytPlayer.loadVideoById!=='function'){setTimeout(()=>loadYouTubeSong(url),300);return;}
+ ytPlayer.loadVideoById(id); ytPlayer.pauseVideo();
+}
 function updateTimeDisplay(){
- const audio=document.getElementById("audio");
- const display=document.getElementById("timeDisplay");
- if(!display)return;
- display.textContent=`${formatTime(audio.currentTime)} / ${formatTime(audio.duration)}`;
+ const display=document.getElementById('timeDisplay'); if(!display)return;
+ if(currentSong && isYouTubeUrl(currentSong.youtube||currentSong.audio)){
+  const cur=ytPlayer&&typeof ytPlayer.getCurrentTime==='function'?Number(ytPlayer.getCurrentTime()||0):0;
+  const dur=ytPlayer&&typeof ytPlayer.getDuration==='function'?Number(ytPlayer.getDuration()||0):0;
+  display.textContent=`${formatTime(cur)} / ${formatTime(dur)}`;
+ }else{
+  const audio=document.getElementById('audio');
+  display.textContent=`${formatTime(audio.currentTime)} / ${formatTime(audio.duration)}`;
+ }
 }
-
 function openPlayer(id){
- const s=songs.find(x=>x.id===id);if(!s)return;
- currentSong=s;hideAll();document.getElementById("playerPage").classList.remove("hidden");
- document.getElementById("playerCover").src=s.img;
- document.getElementById("playerTitle").textContent=s.name;
- document.getElementById("playerSinger").textContent=s.singer+" • "+s.year;
-
- const audio=document.getElementById("audio");
- audio.pause();
- audio.removeAttribute("src");
- audio.load();
- audio.src=s.audio||"";
- audio.load();
-
- document.getElementById("playBtn").textContent="▶";
- document.getElementById("progress").value=0;
- updateTimeDisplay();
+ const s=songs.find(x=>String(x.id)===String(id)); if(!s)return;
+ currentSong=s; hideAll(); document.getElementById('playerPage').classList.remove('hidden');
+ document.getElementById('playerCover').src=s.img;
+ document.getElementById('playerTitle').textContent=s.name;
+ document.getElementById('playerSinger').textContent=s.singer+' • '+s.year;
+ document.getElementById('progress').value=0;
+ document.getElementById('timeDisplay').textContent='0:00 / 0:00';
+ document.getElementById('playBtn').textContent='▶';
+ const audio=document.getElementById('audio'); audio.pause(); audio.removeAttribute('src'); audio.load(); stopYTTimer();
+ const source=s.youtube||s.audio||'';
+ if(isYouTubeUrl(source)) loadYouTubeSong(source);
+ else if(s.audio){audio.src=s.audio;audio.load();}
 }
-function isYouTubeUrl(url){
-  return /(?:youtube\.com|youtu\.be)/i.test(String(url||""));
-}
-
 function toggleAudio(){
-  if(!currentSong)return;
-  const audio=document.getElementById("audio");
-  const url=String(currentSong.audio||"").trim();
-
-  if(!url){
-    const msg="No direct audio URL. Add a public MP3/M4A/FLAC file URL in audioUrl.";
-    if(tg)tg.showAlert(msg); else alert(msg);
-    return;
+ if(!currentSong)return;
+ const source=currentSong.youtube||currentSong.audio||'';
+ if(isYouTubeUrl(source)){
+  if(!ytPlayer||typeof ytPlayer.getPlayerState!=='function'){
+   const msg='YouTube player is still loading. Please tap Play again in a moment.';
+   if(tg)tg.showAlert(msg);else alert(msg); return;
   }
-
-  if(isYouTubeUrl(url)){
-    const msg="This audioUrl is a YouTube link. A YouTube page URL cannot be used directly by HTML audio. Use a direct public MP3/M4A/FLAC URL in audioUrl.";
-    if(tg)tg.showAlert(msg); else alert(msg);
-    return;
-  }
-
-  if(audio.paused){
-    const p=audio.play();
-    if(p && p.catch)p.catch(err=>{
-      console.error("Audio play failed:",err);
-      const msg="Audio could not be played. Check that audioUrl is a direct public audio file URL.";
-      if(tg)tg.showAlert(msg); else alert(msg);
-    });
-  }else{
-    audio.pause();
-  }
+  const state=ytPlayer.getPlayerState();
+  if(state===YT.PlayerState.PLAYING)ytPlayer.pauseVideo();else ytPlayer.playVideo();
+  return;
+ }
+ const audio=document.getElementById('audio');
+ if(!source){const msg='No audio URL. Add a direct public audio URL or a YouTube URL.';if(tg)tg.showAlert(msg);else alert(msg);return;}
+ if(audio.paused){const p=audio.play();if(p&&p.catch)p.catch(err=>{console.error(err);const msg='Audio could not be played. Check the audio URL and hosting permissions.';if(tg)tg.showAlert(msg);else alert(msg);});}else audio.pause();
 }
+
 function prevSong(){
- if(!currentSong)return;let i=songs.findIndex(s=>s.id===currentSong.id);openPlayer(songs[(i-1+songs.length)%songs.length].id);
+ if(!currentSong||!songs.length)return;
+ const i=songs.findIndex(s=>String(s.id)===String(currentSong.id));
+ openPlayer(songs[(i-1+songs.length)%songs.length].id);
 }
 function nextSong(){
- if(!currentSong)return;let i=songs.findIndex(s=>s.id===currentSong.id);openPlayer(songs[(i+1)%songs.length].id);
+ if(!currentSong||!songs.length)return;
+ const i=songs.findIndex(s=>String(s.id)===String(currentSong.id));
+ openPlayer(songs[(i+1)%songs.length].id);
 }
 function goBackFromPlayer(){goHome();}
 function toggleFavorite(id){
