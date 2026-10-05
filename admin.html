@@ -100,6 +100,17 @@ measurementId:"G-LHZR62BRNH"
 firebase.initializeApp(firebaseConfig);
 const auth=firebase.auth(), db=firebase.firestore();
 
+/* ADMIN ACCESS CONTROL */
+const ALLOWED_ADMIN_EMAILS = [
+  "althafkamaru23@gmail.com"
+];
+
+function isAllowedAdmin(user){
+  return !!user &&
+    !!user.email &&
+    ALLOWED_ADMIN_EMAILS.includes(user.email.trim().toLowerCase());
+}
+
 const $=id=>document.getElementById(id);
 
 function openAlbumForm(){
@@ -163,7 +174,6 @@ $("addAlbumBtn").addEventListener("click",openAlbumForm);
 $("cancelAlbumBtn").addEventListener("click",closeAlbumForm);
 $("saveAlbumBtn").addEventListener("click",saveAlbum);
 $("addSongBtn").addEventListener("click",()=>showNotReady("Add Song"));
-$("addSingerBtn").addEventListener("click",()=>showNotReady("Add Singer"));
 
 
 function closeAllExtraForms(){
@@ -236,13 +246,22 @@ document.getElementById("addArtistBtn").addEventListener("click",openArtistForm)
 document.getElementById("cancelArtistBtn").addEventListener("click",closeArtistForm);
 document.getElementById("saveArtistBtn").addEventListener("click",saveArtist);
 
-auth.onAuthStateChanged(user=>{
- if(user){
-  $("loginPage").classList.add("hidden");$("adminPage").classList.remove("hidden");
-  $("adminEmail").textContent=user.email||"";loadCounts();
- }else{
-  $("adminPage").classList.add("hidden");$("loginPage").classList.remove("hidden");
- }
+auth.onAuthStateChanged(async user=>{
+  if(user && isAllowedAdmin(user)){
+    $("loginPage").classList.add("hidden");
+    $("adminPage").classList.remove("hidden");
+    $("adminEmail").textContent=user.email||"";
+    $("loginError").textContent="";
+    loadCounts();
+  }else{
+    $("adminPage").classList.add("hidden");
+    $("loginPage").classList.remove("hidden");
+    $("adminEmail").textContent="";
+    if(user && !isAllowedAdmin(user)){
+      $("loginError").textContent="Access denied. This account is not an administrator.";
+      try{ await auth.signOut(); }catch(e){}
+    }
+  }
 });
 </script>
 </body>
