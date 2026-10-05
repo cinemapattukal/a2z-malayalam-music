@@ -4,6 +4,22 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>A2Z Malayalam Songs — Admin</title>
+
+<div id="singerFormCard" class="card form hidden" style="margin-top:20px">
+<div class="formTitle"><h2>＋ Add Singer</h2><button id="cancelSingerBtn" class="cancel" type="button">Cancel</button></div>
+<label>Singer Name</label><input id="singerName" type="text" placeholder="Singer name">
+<label>Singer Image URL</label><input id="singerImage" type="url" placeholder="https://...">
+<div class="actions"><button id="saveSingerBtn" class="action" type="button">Save Singer</button></div>
+<div id="singerError" class="error"></div><div id="singerSuccess" class="success"></div>
+</div>
+
+<div id="artistFormCard" class="card form hidden" style="margin-top:20px">
+<div class="formTitle"><h2>＋ Add Artist</h2><button id="cancelArtistBtn" class="cancel" type="button">Cancel</button></div>
+<label>Artist Name</label><input id="artistName" type="text" placeholder="Artist name">
+<label>Artist Image URL</label><input id="artistImage" type="url" placeholder="https://...">
+<div class="actions"><button id="saveArtistBtn" class="action" type="button">Save Artist</button></div>
+<div id="artistError" class="error"></div><div id="artistSuccess" class="success"></div>
+</div>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
@@ -43,6 +59,7 @@ input:focus{border-color:#168cff}.top{display:flex;justify-content:space-between
 <div class="stat">Albums<b id="albumCount">0</b></div>
 <div class="stat">Songs<b id="songCount">0</b></div>
 <div class="stat">Singers<b id="singerCount">0</b></div>
+<div class="stat">Artists<b id="artistCount">0</b></div>
 </div>
 
 <div class="card" style="margin-top:20px">
@@ -51,6 +68,7 @@ input:focus{border-color:#168cff}.top{display:flex;justify-content:space-between
 <button id="addAlbumBtn" class="action" type="button">＋ Add Album</button>
 <button id="addSongBtn" class="action" type="button">＋ Add Song</button>
 <button id="addSingerBtn" class="action" type="button">＋ Add Singer</button>
+<button id="addArtistBtn" class="action" type="button">＋ Add Artist</button>
 </div>
 <p id="message" style="color:#777;margin-top:18px">Choose an option above.</p>
 </div>
@@ -146,6 +164,77 @@ $("cancelAlbumBtn").addEventListener("click",closeAlbumForm);
 $("saveAlbumBtn").addEventListener("click",saveAlbum);
 $("addSongBtn").addEventListener("click",()=>showNotReady("Add Song"));
 $("addSingerBtn").addEventListener("click",()=>showNotReady("Add Singer"));
+
+
+function closeAllExtraForms(){
+  ["singerFormCard","artistFormCard"].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.classList.add("hidden");
+  });
+}
+function openSingerForm(){
+  closeAllExtraForms();
+  document.getElementById("singerFormCard").classList.remove("hidden");
+  document.getElementById("singerError").textContent="";
+  document.getElementById("singerSuccess").textContent="";
+}
+function closeSingerForm(){document.getElementById("singerFormCard").classList.add("hidden");}
+async function saveSinger(){
+  const err=document.getElementById("singerError"), ok=document.getElementById("singerSuccess");
+  const btn=document.getElementById("saveSingerBtn");
+  const name=document.getElementById("singerName").value.trim();
+  const imageUrl=document.getElementById("singerImage").value.trim();
+  err.textContent=""; ok.textContent="";
+  if(!name){err.textContent="Singer Name is required.";return;}
+  if(!imageUrl){err.textContent="Singer Image URL is required.";return;}
+  btn.disabled=true; btn.textContent="Saving...";
+  try{
+    await db.collection("singers").add({
+      name:name,
+      imageUrl:imageUrl,
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    ok.textContent="Singer saved successfully.";
+    document.getElementById("singerName").value="";
+    document.getElementById("singerImage").value="";
+    if(typeof loadCounts==="function") await loadCounts();
+  }catch(e){err.textContent="Could not save singer: "+e.message;}
+  finally{btn.disabled=false;btn.textContent="Save Singer";}
+}
+function openArtistForm(){
+  closeAllExtraForms();
+  document.getElementById("artistFormCard").classList.remove("hidden");
+  document.getElementById("artistError").textContent="";
+  document.getElementById("artistSuccess").textContent="";
+}
+function closeArtistForm(){document.getElementById("artistFormCard").classList.add("hidden");}
+async function saveArtist(){
+  const err=document.getElementById("artistError"), ok=document.getElementById("artistSuccess");
+  const btn=document.getElementById("saveArtistBtn");
+  const name=document.getElementById("artistName").value.trim();
+  const imageUrl=document.getElementById("artistImage").value.trim();
+  err.textContent=""; ok.textContent="";
+  if(!name){err.textContent="Artist Name is required.";return;}
+  if(!imageUrl){err.textContent="Artist Image URL is required.";return;}
+  btn.disabled=true; btn.textContent="Saving...";
+  try{
+    await db.collection("artists").add({
+      name:name,
+      imageUrl:imageUrl,
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    ok.textContent="Artist saved successfully.";
+    document.getElementById("artistName").value="";
+    document.getElementById("artistImage").value="";
+    if(typeof loadCounts==="function") await loadCounts();
+  }catch(e){err.textContent="Could not save artist: "+e.message;}
+  finally{btn.disabled=false;btn.textContent="Save Artist";}
+}
+document.getElementById("addSingerBtn").addEventListener("click",openSingerForm);
+document.getElementById("cancelSingerBtn").addEventListener("click",closeSingerForm);
+document.getElementById("saveSingerBtn").addEventListener("click",saveSinger);
+document.getElementById("addArtistBtn").addEventListener("click",openArtistForm);
+document.getElementById("cancelArtistBtn").addEventListener("click",closeArtistForm);
+document.getElementById("saveArtistBtn").addEventListener("click",saveArtist);
 
 auth.onAuthStateChanged(user=>{
  if(user){
