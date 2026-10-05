@@ -172,8 +172,8 @@ async function loadFirebaseData(){
         id: doc.id,
         name: d.name || "",
         year: String(d.year || ""),
-        count: Number(d.songCount ?? d.count ?? 0),
-        img: d.image || d.img || ""
+        count: Number(d.songCount ?? d.count ?? d.totalTracks ?? 0),
+        img: d.imageUrl || d.image || d.img || d.cover || d.poster || ""
       };
     });
 
@@ -187,7 +187,7 @@ async function loadFirebaseData(){
           singer: d.singer || "",
           year: String(d.released ?? d.year ?? ""),
           album: albumDoc.id,
-          img: d.image || d.img || "",
+          img: d.imageUrl || d.image || d.img || d.cover || d.poster || "",
           audio: d.audioUrl || d.audio || "",
           youtube: d.youtubeUrl || d.youtube || "",
           duration: d.duration || "",
@@ -230,17 +230,28 @@ let ytTimer=null;
 const favs=()=>JSON.parse(localStorage.getItem("a2zFavorites")||"[]");
 function saveFavs(a){localStorage.setItem("a2zFavorites",JSON.stringify(a));}
 
+function safeImageUrl(url, fallback="https://via.placeholder.com/500x500?text=A2Z+Malayalam+Songs") {
+  const v=String(url||"").trim();
+  return v || fallback;
+}
+
+function imageTag(url, alt="", className=""){
+  const src=safeImageUrl(url);
+  const esc=String(src).replace(/&/g,"&amp;").replace(/"/g,"&quot;");
+  return `<img class="${className}" src="${esc}" alt="${String(alt).replace(/"/g,"&quot;")}" loading="lazy" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='https://via.placeholder.com/500x500?text=Image+Unavailable';">`;
+}
+
 function renderHome(){
  document.getElementById("albums").innerHTML=albums.map(a=>`
  <button class="album" onclick="openAlbum(\'${a.id.replaceAll("\'","\\\'")}\')">
- <img src="${a.img}"><div class="album-info"><div class="album-name">${a.name}</div>
+ ${imageTag(a.img,a.name)}<div class="album-info"><div class="album-name">${a.name}</div>
  <div class="muted">${a.year} • ${a.count} Songs</div></div></button>`).join("");
 
  document.getElementById("songs").innerHTML=songs.map(songHTML).join("");
 
  document.getElementById("singers").innerHTML=singers.map(s=>`
  <button class="singer" onclick="searchSinger('${s.name.replaceAll("'","\\'")}')">
- <img src="${s.img}"><div>${s.name}</div></button>`).join("");
+ ${imageTag(s.img,s.name)}<div>${s.name}</div></button>`).join("");
 }
 
 function jsArg(value){
@@ -251,7 +262,7 @@ function songHTML(s){
  const isFav=favs().map(String).includes(String(s.id));
  const idArg=jsArg(s.id);
  return `<div class="song" data-song-id="${String(s.id).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}" role="button" tabindex="0">
- <img src="${s.img}" alt="">
+ ${imageTag(s.img,s.name)}
  <div class="song-info">
  <div class="song-name">${s.name}</div><div class="muted">${s.singer} • ${s.year}</div></div>
  <button type="button" class="heart" data-action="favorite" data-song-id="${String(s.id).replace(/"/g,"&quot;")}">${isFav?'❤️':'♡'}</button>
@@ -304,7 +315,8 @@ function openAlbum(id){
  const a=albums.find(x=>String(x.id)===String(id)); if(!a)return;
  currentAlbumId=a.id;
  hideAll();document.getElementById("albumPage").classList.remove("hidden");
- document.getElementById("albumCover").src=a.img;
+ document.getElementById("albumCover").src=safeImageUrl(a.img);
+  document.getElementById("albumCover").onerror=function(){this.onerror=null;this.src="https://via.placeholder.com/500x500?text=Image+Unavailable";};
  document.getElementById("albumTitle").textContent=a.name;
  document.getElementById("albumMeta").textContent=a.year+" • "+a.count+" Songs";
  const list=songs.filter(s=>String(s.album)===String(id));
